@@ -19,16 +19,44 @@ EnemySword::~EnemySword()
 void EnemySword::Update(float elapsedTime)
 {
 	
-	if (dashState != DashState::Cooldown)
-	{
-		Dash(elapsedTime);
-		UpdateTransform();
-		model->UpdateTransform();
-		return;
-	}
+	//if (dashState != DashState::Cooldown)
+	//{
+	//	Dash(elapsedTime);
+	//	UpdateTransform();
+	//	model->UpdateTransform();
+	//	return;
+	//}
 
-	ChasePlayer(elapsedTime);
-	Dash(elapsedTime);
+	//ChasePlayer(elapsedTime);
+	//Dash(elapsedTime);
+
+	//if (dying)
+	//{
+	//	deathTimer += elapsedTime;
+	//	Impulse(elapsedTime);
+	//	
+	//	UpdateVelocity(elapsedTime);
+	//	
+	//	if (velocity.y <= 0.0f)
+	//	{
+	//		Shrink(elapsedTime);
+	//	}
+	//
+	//	UpdateTransform();
+	//	model->UpdateTransform();
+	//	
+	//	if (deathTimer > 2.5f) Destroy();
+	//	return;
+	//}
+
+	//UpdateVelocity(elapsedTime);   // if you want normal gravity for sword when alive
+	//UpdateTransform();
+
+	//
+	//UpdateInvincibleTimer(elapsedTime);
+	//model->UpdateTransform();
+
+
 
 	if (dying)
 	{
@@ -48,6 +76,28 @@ void EnemySword::Update(float elapsedTime)
 		if (deathTimer > 2.5f) Destroy();
 		return;
 	}
+
+
+	//Dash(elapsedTime);
+	//
+	//
+	//UpdateVelocity(elapsedTime);   // if you want normal gravity for sword when alive
+	////UpdateInvincibleTimer(elapsedTime);
+	//
+	//UpdateTransform();
+	//model->UpdateTransform();
+
+
+	if (dashState != DashState::Cooldown)
+	{
+		Dash(elapsedTime);
+		UpdateTransform();
+		model->UpdateTransform();
+		return;
+	}
+
+	ChasePlayer(elapsedTime);
+	Dash(elapsedTime);
 
 	UpdateVelocity(elapsedTime);   // if you want normal gravity for sword when alive
 	UpdateTransform();

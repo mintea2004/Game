@@ -54,7 +54,7 @@ protected:
 
 	//dash
 
-	enum class DashState { Cooldown, Windup, Dashing, Recover };
+	enum class DashState { Cooldown, Windup, Dashing, Recover, Dying };
 	DashState dashState = DashState::Cooldown;
 
 	bool targetLocked = false;

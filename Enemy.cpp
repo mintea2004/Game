@@ -61,6 +61,8 @@ void Enemy::Dash(float elapsedTime)
     switch (dashState)
     {
     case DashState::Cooldown:
+        //ChasePlayer(elapsedTime);
+
         // wait for cooldown, and only start if close enough
         if (dashTimer <= 0.0f && distSq <= dashRange * dashRange)
         {

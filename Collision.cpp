@@ -13,12 +13,14 @@ bool Collision::IntersectCylinderVsCylinder(
     bool slamming
 )
 {
-    if (positionA.y > positionB.y + heightB)
-        return false;
+    if (!slamming)
+    {
+        if (positionA.y > positionB.y + heightB)
+            return false;
 
-    if ((positionA.y + heightA < positionB.y) && !slamming)
-        return false;
-
+        if (positionA.y + heightA < positionB.y) 
+            return false;
+    }
     float vx = positionB.x - positionA.x;
     float vz = positionB.z - positionA.z;
 

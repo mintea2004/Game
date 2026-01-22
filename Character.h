@@ -26,11 +26,22 @@ public:
 
 	virtual void RenderDebugPrimitive(const RenderContext& rc, ShapeRenderer* renderer);
 
+	int GetHp()  { return hp; }
+
 	bool IsGround() const { return isGround; }
 	bool IsAir() const { return !isGround; }
 	bool IsSlamHitActive() const
 	{
 		return slamHitActive;
+	}
+
+	bool IsSlammed() const
+	{
+		return isSlammed;
+	}
+	void SlamCheck()
+	{
+		isSlammed = !isSlammed;
 	}
 
 	void AddImpulse(const DirectX::XMFLOAT3& impluse);
@@ -56,7 +67,7 @@ protected:
 	bool isGround = true;
 	bool isMoving = false;
 	float height = 2.0f;
-	int health = 5;
+	//int health = 5;
 	float invincibleTimer = 1.0f;
 	float friction = 15.0f;
 	float acceleration = 50.0f;
@@ -66,12 +77,17 @@ protected:
 	float airControl = 0.3f;
 	float visualOffset = 0.0f;
 
+	int hp = 0;
+
 	//slam
 	float slamDelay = 0.07f;
 	float slamSpeed = 0.0f;
 	float slamRadius = 2.0f;
 	bool isSlamming = false;
 	bool slamHitActive = false;
+	bool isSlammed = false;
+	float slamImpactTimer = 0.0f;
+
 	//squash
 	float slamSquashAmount = 3.0f;   // how strong the squash is
 	float slamSquashSpeed = 1.9f;   // how fast it recovers

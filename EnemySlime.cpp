@@ -6,9 +6,13 @@ EnemySlime::EnemySlime()
 
 	scale.x = scale.y = scale.z = 0.01f;
 
+	bs = scale;
+
 	radius = 0.5f;
 
 	height = 1.0f;
+
+	hp = 1;
 }
 
 EnemySlime::~EnemySlime()
@@ -26,7 +30,7 @@ void EnemySlime::Update(float elapsedTime)
 		
 		
 		UpdateTransform();
-		//transform._22 *= squashY;
+		
 		model->UpdateTransform();
 		return; 
 	}

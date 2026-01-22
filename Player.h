@@ -105,7 +105,6 @@ private:
 	float hopSpeed = 6.0f;    // how fast it hops
 	bool grounded;
 
-	//float Lerp(float a, float b, float t);
 
 protected:
 

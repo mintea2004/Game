@@ -3,6 +3,7 @@
 #include "Camera.h"
 #include "EnemyManager.h"
 #include "EnemySlime.h"
+#include "EnemySword.h"
 #include "Item.h"
 #include"ItemManager.h"
 #include <cstdlib>
@@ -23,12 +24,12 @@ void SceneGame::Initialize()
 	slime->SetPosition(DirectX::XMFLOAT3{ 3.0f,0.0f,3.0f });
 	enemyManager.Register(slime);*/
 
-	for (int i = 0; i < 2; i++)
+	/*for (int i = 0; i < 2; i++)
 	{
 		EnemySlime* slime = new EnemySlime();
 		slime->SetPosition(DirectX::XMFLOAT3(i * 2.0f, 0, 5));
 		enemyManager.Register(slime);
-	}
+	}*/
 
 	Graphics& graphics = Graphics::Instance();
 	Camera& camera = Camera::Instance();
@@ -84,6 +85,40 @@ void SceneGame::Update(float elapsedTime)
 	stage->Update(elapsedTime);
 	player->Update(elapsedTime);
 	
+	
+	int j = rand() % 2;
+	static float EneSpawnTimer = 0.0f;
+	EneSpawnTimer -= elapsedTime;
+	if(EneSpawnTimer<=0.0f&& rand() % 2 == 0&&EnemyManager::Instance().GetEnemyCount()<10)
+	{
+		EneSpawnTimer = 5.0f;
+
+		auto RandRangeEne = [](float a, float b)
+			{
+				float t = (float)rand() / (float)RAND_MAX;
+				return a + (b - a) * t;
+			};
+
+		float x = RandRangeEne(-10.0f, 10.0f);
+		float z = RandRangeEne(player->GetPosition().z - 20.0f, player->GetPosition().z + 20.0f); // in front of camera
+		
+		if (j) { 
+			EnemySlime* slime = new EnemySlime(); 
+			slime->SetPosition(DirectX::XMFLOAT3(x, 0, z));
+
+			EnemyManager::Instance().Register(slime);
+		}
+		else { 
+			EnemySword* sword = new EnemySword(); 
+			sword->SetPosition(DirectX::XMFLOAT3(x, 0, z));
+
+			EnemyManager::Instance().Register(sword);
+		}
+		
+		
+		
+	}
+
 	EnemyManager::Instance().Update(elapsedTime);
 
 	

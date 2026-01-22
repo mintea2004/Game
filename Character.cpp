@@ -128,7 +128,7 @@ bool Character::ApplyDamage(int damage, float invincibleTime)
 		return false;
 	}
 
-	if (health <= 0)
+	if (hp <= 0)
 	{
 		return false;
 	}
@@ -141,9 +141,9 @@ bool Character::ApplyDamage(int damage, float invincibleTime)
 	invincibleTimer = invincibleTime;
 
 
-	health = health - damage;
+	hp = hp - damage;
 
-	if (health <= 0)
+	if (hp <= 0)
 	{
 		OnDead();
 	}

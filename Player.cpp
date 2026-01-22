@@ -15,6 +15,7 @@ Player::Player()
 	model = new Model("Data/Model/Slime/Slime.mdl");
 	radius = 0.5f;
 	height = 1.0f;
+	hp = 10.0f;
 	//sword = new Model("Data/Model/Sword/Sword.mdl");
 }
 
@@ -24,10 +25,6 @@ Player::~Player()
 	//delete sword;
 }
 
-//float Player::Lerp(float a, float b, float t)
-//{
-//	return a + (b - a) * t;
-//}
 
 
 
@@ -114,7 +111,7 @@ void Player::Update(float elapsedTime)
 
 	if (isSlamming&&velocity.y<=0.0f)
 	{
-		slamGauge = 0;
+		//slamGauge = 0;
 		Slam(elapsedTime);
 	}
 
@@ -130,6 +127,12 @@ void Player::Update(float elapsedTime)
 		position.x += velocity.x * elapsedTime;
 		position.z += velocity.z * elapsedTime;
 	}
+
+
+	
+	
+	
+	UpdateInvincibleTimer(elapsedTime);
 
 	CollisionPlayerVsItem();
 
@@ -250,6 +253,7 @@ void Player::DrawDebugGUI()
 	{
 		if (ImGui::CollapsingHeader("Transform", ImGuiTreeNodeFlags_DefaultOpen))
 		{
+			ImGui::InputInt("HP", &hp);
 			ImGui::InputFloat3("Position", &position.x);
 			DirectX::XMFLOAT3 a;
 			a.x = DirectX::XMConvertToDegrees(angle.x);
@@ -261,6 +265,8 @@ void Player::DrawDebugGUI()
 			angle.z = DirectX::XMConvertToRadians(a.z);
 			ImGui::InputFloat3("Scale", &scale.x);
 			ImGui::InputInt("SlamGauge", &slamGauge);
+			ImGui::InputFloat("Invi", &invincibleTimer);
+			//ImGui::Text("isSlamming() = ", isSlamming());
 			ImGui::Text("GetSlamRadius() = %.3f", GetSlamRadius());
 
 		}
@@ -289,7 +295,34 @@ void Player::CollisionPlayerVsEnemies()
 			isSlamming))
 		{
 			enemy->SetPosition(outPosition);
+			if(enemy->GetHp()>0&&!IsAir())
+			{
+			this->ApplyDamage(1, 1.0f);
 			
+				//吹き飛ばす
+				DirectX::XMFLOAT3 impulse;
+				impulse.x = position.x - enemy->GetPosition().x;
+				impulse.y = 0.2f; // 少し浮かせる（好み）
+				impulse.z = position.z - enemy->GetPosition().z;
+
+				// 正規化
+				float len = sqrtf(impulse.x * impulse.x + impulse.z * impulse.z);
+				if (len > 0.001f)
+				{
+					impulse.x /= len;
+					impulse.z /= len;
+				}
+
+				// 強さ
+				const float knockbackPower = 8.0f;
+				impulse.x *= knockbackPower;
+				impulse.y *= knockbackPower;
+				impulse.z *= knockbackPower;
+
+				this->AddImpulse(impulse);
+
+				Jump(jumpSpeed * 0.5f);
+			}
 		}
 	}
 }
@@ -339,10 +372,14 @@ void Player::SlamPlayerVsEnemies()
 	for (int i = 0; i < enemyCount; ++i)
 	{
 		Enemy* enemy = enemyManager.GetEnemy(i);
+
+		if (!enemy) continue;
+		if (enemy->GetHp() <= 0) continue;
+
 		DirectX::XMFLOAT3 outPosition;
 
 		// ① 下向き中のみ
-		if (velocity.y >= -0.1f)
+		if (velocity.y > 0.0f)
 			continue;
 
 		if (Collision::IntersectCylinderVsCylinder(
@@ -356,17 +393,10 @@ void Player::SlamPlayerVsEnemies()
 			isSlamming))
 		{
 			// 💥 SLAM DAMAGE
-		enemy->TakeDamage(1);
+			enemy->SlamCheck();
+	        enemy->TakeDamage(1);
 	
-	//	push enemy away
-		//enemy->SetPosition(outPosition);
-
-		// death
-		/*if (enemy->IsDead())
-		{
-			enemyManager.Remove(enemy);
-		}*/
-		//break; // 複数ヒット防止
+	
 		}
 	}
 }
@@ -493,6 +523,9 @@ void Player::StartSlam()
 	{
 		return;
 	}
+	if (slamGauge <= 0) return;
+
+	slamGauge = 0;
 	isSlamming = true;
 	slamHitActive = true;
 }

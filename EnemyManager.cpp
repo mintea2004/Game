@@ -111,6 +111,8 @@ void EnemyManager::DrawDebugGUI()
 			{
 				if (ImGui::CollapsingHeader("Transform", ImGuiTreeNodeFlags_DefaultOpen))
 				{
+					int hp = enemy->GetHp();
+					ImGui::InputInt("Hp", &hp);
 					DirectX::XMFLOAT3 pos = enemy->GetPosition();
 					ImGui::InputFloat3("Position", &pos.x);
 					enemy->SetPosition(pos);
@@ -126,6 +128,7 @@ void EnemyManager::DrawDebugGUI()
 					DirectX::XMFLOAT3 scale = enemy->GetScale();
 					ImGui::InputFloat3("Scale", &scale.x);
 					enemy->SetScale(scale);
+					ImGui::Text("isSlammed: %s", enemy->IsSlammed() ? "true" : "false");
 				}
 				ImGui::TreePop();
 			}

@@ -20,11 +20,7 @@ void SceneGame::Initialize()
 	EnemyManager& enemyManager = EnemyManager::Instance();
 	//player情報渡す
 	enemyManager.SetPlayer(player);
-	EnemySword* sword = new EnemySword();
 	
-	/*EnemySlime* slime = new EnemySlime();
-	slime->SetPosition(DirectX::XMFLOAT3{ 3.0f,0.0f,3.0f });
-	enemyManager.Register(slime);*/
 
 	/*for (int i = 0; i < 2; i++)
 	{

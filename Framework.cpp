@@ -41,6 +41,8 @@ Framework::~Framework()
 
 	// IMGUII—¹‰»
 	ImGuiRenderer::Finalize();
+
+	//Graphics::Instance().Finalize();
 }
 
 // XVˆ—

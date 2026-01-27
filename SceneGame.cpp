@@ -20,6 +20,8 @@ void SceneGame::Initialize()
 	EnemyManager& enemyManager = EnemyManager::Instance();
 	//player情報渡す
 	enemyManager.SetPlayer(player);
+	EnemySword* sword = new EnemySword();
+	
 	/*EnemySlime* slime = new EnemySlime();
 	slime->SetPosition(DirectX::XMFLOAT3{ 3.0f,0.0f,3.0f });
 	enemyManager.Register(slime);*/
@@ -115,6 +117,35 @@ void SceneGame::Update(float elapsedTime)
 			EnemyManager::Instance().Register(sword);
 		}
 		
+	//	
+	//	
+	//}
+	//if(EneSpawnTimer<=0.0f&& rand() % 2 == 0&&EnemyManager::Instance().GetEnemyCount()<1)
+	//{
+	//	EneSpawnTimer = 5.0f;
+
+	//	auto RandRangeEne = [](float a, float b)
+	//		{
+	//			float t = (float)rand() / (float)RAND_MAX;
+	//			return a + (b - a) * t;
+	//		};
+
+	//	float x = RandRangeEne(-10.0f, 10.0f);
+	//	float z = RandRangeEne(player->GetPosition().z - 20.0f, player->GetPosition().z + 20.0f); // in front of camera
+	//	
+	//	if (j) { 
+	//		EnemySlime* slime = new EnemySlime(); 
+	//		slime->SetPosition(DirectX::XMFLOAT3(x, 0, z));
+
+	//		EnemyManager::Instance().Register(slime);
+	//	}
+	//	else { 
+	//		EnemySword* sword = new EnemySword(); 
+	//		sword->SetPosition(DirectX::XMFLOAT3(x, 0, z));
+
+	//		EnemyManager::Instance().Register(sword);
+	//	}
+	//	
 		
 		
 	}
@@ -148,9 +179,23 @@ void SceneGame::Update(float elapsedTime)
 				return a + (b - a) * t;
 			};
 
-		float x = RandRange(-10.0f, 10.0f);
-		float z = RandRange(0.0f, 20.0f); // in front of camera
-		ItemManager::Instance().Spawn({ x, 0.5f, z });
+		float x = RandRange(player->GetPosition().x - 10.0f, player->GetPosition().x + 10.0f);
+		float z = RandRange(player->GetPosition().z - 20.0f, player->GetPosition().z + 20.0f); 
+		float y;
+		switch (rand() % 2)
+		{
+		case 0:
+			y = 0.5f;
+			break;
+		case 1:
+			y = 3.0f;
+			break;
+		}
+		if (z > 40.0f)  z = 40.0f;
+		if (z < -40.0f) z = -40.0f;
+		if (x > 12.0f)	x = 12.0f;
+		if (x < -12.0f) x = -12.0f;
+		ItemManager::Instance().Spawn({ x, y, z });
 	}
 
 	// ✅ update items

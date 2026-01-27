@@ -22,8 +22,6 @@ EnemySlime::~EnemySlime()
 
 void EnemySlime::Update(float elapsedTime)
 {
-	ChasePlayer(elapsedTime);
-
 	if (dying)
 	{
 		gettingSlammed(elapsedTime);
@@ -34,6 +32,9 @@ void EnemySlime::Update(float elapsedTime)
 		model->UpdateTransform();
 		return; 
 	}
+
+	ChasePlayer(elapsedTime);
+
 
 	ApplyHop(elapsedTime);
 	UpdateTransform();

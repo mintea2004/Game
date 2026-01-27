@@ -2,6 +2,16 @@
 
 #include"System//ModelRenderer.h"
 #include"Character.h"
+#define MAX_DASHCOOLDOWN 600.0f
+
+enum class State
+{
+	Ground,
+	Air,
+	Dash,
+	Slam,
+	SlamCooldown
+};
 
 class Player : public Character
 {
@@ -21,6 +31,8 @@ public:
 private:
 
 	Model* model = nullptr;
+
+	State state;
 	
 	//Model* sword = nullptr;
 	DirectX::XMFLOAT3 GetMoveVec() const;
@@ -32,10 +44,14 @@ private:
 	
 	void ApplyHop(float elapsedTime);
 
+	void MoveSeiGen();
+
 	//slam
 	void StartSlam();
-	void SlamRecovery(float elapsedTime);
+	//void SlamRecovery(float elapsedTime);
 	void SlamPlayerVsEnemies();
+
+	bool IsSlamming() { return state == State::Slam; }
 	int GetSlamGauge()
 	{
 		return slamGauge;
@@ -49,6 +65,7 @@ private:
 	float dashTimer = 0.0f;
 	float dashDuration = 0.08f;
 	float dashSpeed = 13.0f;
+	float dashCooldown = 0.0f;
 
 	// Dash lean
 	float dashLeanAngle = 0.0f;          // current z-rotation
@@ -85,18 +102,16 @@ private:
 	bool isMoving = false;
 
 	//slam
-	bool isSlamming = false;
 	float slamInputBuffer = 0.0f;
 	const float slamBufferTime = 0.25f;
-	float slamAfterBuffer = 0.0f;
-	const float slamAfterTimer = 0.75f;
+	float slamAfterTimer = 0.6f;
 	bool slamRecovery = false;
 	float OffsetY = 3.0f;
 	int slamGauge = 0;
-	int MaxGauge = 3;
+	int MaxGauge = 1;
 
 	//squash
-	float slamSquashAmount = 3.0f;   // how strong the squash is
+	float slamSquashAmount = 0.35f;   // how strong the squash is
 	float slamSquashSpeed = 1.9f;   // how fast it recovers
 
 	float baseY = 0.0f;

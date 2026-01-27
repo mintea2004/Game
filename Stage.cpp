@@ -1,5 +1,6 @@
 #include"Stage.h"
 
+
 Stage::Stage()
 {
 	model = new Model("Data/Model/Stage/ExampleStage.mdl");

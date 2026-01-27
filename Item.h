@@ -16,7 +16,7 @@ public:
 
 	void RenderDebugPrimitive(const RenderContext& rc, ShapeRenderer* renderer)
 	{
-		renderer->RenderCylinder(rc, { position.x,0.0f,position.z }, radius, height, DirectX::XMFLOAT4(0, 0, 0, 1));
+		renderer->RenderCylinder(rc, { position.x,position.y,position.z }, radius, height, DirectX::XMFLOAT4(0, 0, 0, 1));
 	}
 
 	const DirectX::XMFLOAT3& GetPosition() const { return position; }

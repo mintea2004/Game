@@ -5,6 +5,7 @@
 #include"System/Input.h"
 #include<imgui.h>
 #include"Camera.h"
+#include<math.h>
 
 
 
@@ -16,6 +17,7 @@ Player::Player()
 	radius = 0.5f;
 	height = 1.0f;
 	hp = 10.0f;
+	state = State::Ground;
 	//sword = new Model("Data/Model/Sword/Sword.mdl");
 }
 
@@ -38,8 +40,9 @@ void Player::Update(float elapsedTime)
 		fabsf(moveVec.x) > DEADZONE ||
 		fabsf(moveVec.z) > DEADZONE;
 
-	//jump
-	InputJump(elapsedTime);
+	MoveSeiGen();
+
+	if (state!= State::Dash && dashCooldown<MAX_DASHCOOLDOWN) dashCooldown++;
 
 	//slam
 	if (slamInputBuffer > 0.0f)
@@ -47,22 +50,11 @@ void Player::Update(float elapsedTime)
 		slamInputBuffer -= elapsedTime;
 	}
 
-	if (slamAfterBuffer>0.0f)
+	/*if (slamAfterBuffer>0.0f)
 	{
 		slamAfterBuffer -= elapsedTime;
-	}
-	SlamRecovery(elapsedTime);
-
-	//dash
-	if (isDashing)
-	{
-		dashTimer -= elapsedTime;
-		if (dashTimer <= 0.0f)
-		{
-			isDashing = false;
-		}
-	}
-
+	}*/
+	
 	// tilt
 	// --- DASH FORWARD LEAN UPDATE ---
 	if (dashLeanHoldTimer > 0.0f)
@@ -88,49 +80,103 @@ void Player::Update(float elapsedTime)
 
 	angle.x = dashLeanAngle;
 
-
-
 	grounded = isGround;
-	//CollisionPlayerVsEnemies();
 
-	InputMove(elapsedTime);
+	if (state == State::Ground || state == State::Air)
+		InputJump(elapsedTime);
 	
-	if (!slamHitActive)
+	//CollisionPlayerVsEnemies();
+	switch (state)
 	{
+	case State::Ground:
+
+		InputMove(elapsedTime);
+		
 		CollisionPlayerVsEnemies();
-	}
-	// start slam ONLY when falling
-	if (slamGauge==MaxGauge&&!isGround &&
-		!isSlamming &&
-		slamInputBuffer > 0.0f &&
-		velocity.y <= 0.0f)
-	{
-		StartSlam();
-		slamInputBuffer = 0.0f; // consume
-	}
+		CollisionPlayerVsItem();
 
-	if (isSlamming&&velocity.y<=0.0f)
-	{
-		//slamGauge = 0;
-		Slam(elapsedTime);
-	}
+		UpdateVelocity(elapsedTime);
 
-	if (slamHitActive)
-	{
-		SlamPlayerVsEnemies();
-	}
+		if (!isGround) state = State::Air;
 
-	if (!slamRecovery&&!isDashing) UpdateVelocity(elapsedTime);
-	else if (isDashing)
-	{
-		// move only horizontally during dash
+		// start slam ONLY when falling
+		if (slamGauge == MaxGauge && !isGround &&
+			!isSlamming &&
+			slamInputBuffer > 0.0f &&
+			velocity.y <= 0.0f)
+		{
+			StartSlam();
+			slamInputBuffer = 0.0f; // consume
+			state = State::Slam;
+		}
+
+		break;
+
+	case State::Air:
+
+		InputMove(elapsedTime);
+
+		if (!slamHitActive) CollisionPlayerVsEnemies();
+
+		UpdateVelocity(elapsedTime);
+
+		if (slamGauge == MaxGauge &&
+			slamInputBuffer > 0.0f && velocity.y <= 0.0f)
+		{
+			StartSlam();
+			slamInputBuffer = 0.0f;
+			state = State::Slam;
+		}
+
+		if (isGround) state = State::Ground;
+
+		break;
+
+	case State::Dash:
+
+		dashTimer -= elapsedTime;
+
+		if (dashTimer <= 0.0f)
+		{
+			state = isGround ? State::Ground : State::Air;
+			break;
+		}
+
 		position.x += velocity.x * elapsedTime;
 		position.z += velocity.z * elapsedTime;
+
+		if (!slamHitActive) CollisionPlayerVsEnemies();
+
+		break;
+
+	case State::Slam:
+		 
+		if (velocity.y <= 0.0f) Slam(elapsedTime);
+
+		SlamPlayerVsEnemies();
+
+		UpdateVelocity(elapsedTime);
+		
+
+			if (position.y <= 0) { 
+				state = State::SlamCooldown; 
+				slamHitActive = false; }
+		break;
+
+	case State::SlamCooldown:
+
+		slamAfterTimer -= elapsedTime;
+
+		if (slamAfterTimer <= 0.0f)
+		{
+			isGround = true;
+			slamAfterTimer = 0.6f;
+			state = State::Ground;
+
+		}
+
+		break;
 	}
-
-
-	
-	
 	
 	UpdateInvincibleTimer(elapsedTime);
 
@@ -185,6 +231,7 @@ void Player::InputMove(float elapsedTime)
 	if (!isGround &&
 		!isDashing &&
 		!dashUsedInAir &&
+		dashCooldown ==  MAX_DASHCOOLDOWN &&
 		forwardTapCount >= 2)
 	{
 		StartDash();
@@ -264,7 +311,8 @@ void Player::DrawDebugGUI()
 			angle.y = DirectX::XMConvertToRadians(a.y);
 			angle.z = DirectX::XMConvertToRadians(a.z);
 			ImGui::InputFloat3("Scale", &scale.x);
-			ImGui::InputInt("SlamGauge", &slamGauge);
+			ImGui::InputFloat("DashCooldown", &dashCooldown);
+			ImGui::InputInt("SlamGauge", &slamGauge);		if ((unsigned)slamGauge > MaxGauge)	slamGauge = MaxGauge;
 			ImGui::InputFloat("Invi", &invincibleTimer);
 			//ImGui::Text("isSlamming() = ", isSlamming());
 			ImGui::Text("GetSlamRadius() = %.3f", GetSlamRadius());
@@ -292,12 +340,12 @@ void Player::CollisionPlayerVsEnemies()
 			enemy->GetRadius(),
 			enemy->GetHeight(),
 			outPosition,
-			isSlamming))
+			IsSlamming()))
 		{
 			enemy->SetPosition(outPosition);
 			if(enemy->GetHp()>0&&!IsAir())
 			{
-			this->ApplyDamage(1, 1.0f);
+			this->ApplyDamage(1, 2.0f);
 			
 				//吹き飛ばす
 				DirectX::XMFLOAT3 impulse;
@@ -321,7 +369,7 @@ void Player::CollisionPlayerVsEnemies()
 
 				this->AddImpulse(impulse);
 
-				Jump(jumpSpeed * 0.5f);
+				if(!IsSlamming())	Jump(jumpSpeed * 0.5f);
 			}
 		}
 	}
@@ -362,14 +410,13 @@ void Player::CollisionPlayerVsItem()
 }
 void Player::SlamPlayerVsEnemies()
 {
-	if (!isSlamming || !slamHitActive)
-		return;
 
 	EnemyManager& enemyManager = EnemyManager::Instance();
 
 	int enemyCount = enemyManager.GetEnemyCount();
 
-	for (int i = 0; i < enemyCount; ++i)
+	//for (int i = 0; i < enemyCount; ++i)
+	for(int i = enemyCount -1; i>=0; --i)
 	{
 		Enemy* enemy = enemyManager.GetEnemy(i);
 
@@ -386,11 +433,11 @@ void Player::SlamPlayerVsEnemies()
 			{ position.x,0.0f,position.z },
 			GetSlamRadius(),
 			GetHeight(),
-			enemy->GetPosition(),
+			{ enemy->GetPosition().x,0.0f,enemy->GetPosition().z},
 			enemy->GetRadius(),
-			enemy->GetHeight(),
+			0.0f,
 			outPosition,
-			isSlamming))
+			IsSlamming()))
 		{
 			// 💥 SLAM DAMAGE
 			enemy->SlamCheck();
@@ -429,12 +476,12 @@ void Player::OnLanding()
 {
 	jumpCount = 1;
 	baseY = position.y;
-	isGround = true;
+	if(state!= State::Slam)isGround = true;
 
 	
 	dashUsedInAir = false;
-	isDashing = false;
 	dashTimer = 0.0f;
+
 	forwardTapCount = 0;
 	forwardTapTimer = 0.0f;
 
@@ -442,23 +489,20 @@ void Player::OnLanding()
 	dashLeanTarget = 0.0f;
 	angle.z = 0.0f;
 
-	if (isSlamming)
+	if (state == State::Slam)
 	{
-		isSlamming = false;
 		slamHitActive = false;
-		slamRecovery = true;
-	}
-	slamAfterBuffer = slamAfterTimer;
+		//slamAfterBuffer = slamAfterTimer;
+	  
 
-	velocity = { 0.0f,0.0f,0.0f };
-
-	if (slamRecovery)
-	{
 		Camera::Instance().AddShake(0.35f);
-		scale.y *= (3.0f - slamSquashAmount);
-		scale.x *= (1.5f + slamSquashAmount);
-		scale.z *= (1.5f + slamSquashAmount);
+
+		scale.y *= (1.0f - slamSquashAmount);        
+		scale.x *= (1.0f + slamSquashAmount * 2.5f); 
+		scale.z *= (1.0f + slamSquashAmount * 2.5f);
 	}
+
+	  velocity = { 0.0f,0.0f,0.0f };
 
 	hopTimer = 0.0f;
 }
@@ -476,7 +520,7 @@ void Player::ApplyHop(float elapsedTime)
 	scale.y = Lerp(scale.y, 0.01f, elapsedTime * slamSquashSpeed);
 	scale.z = Lerp(scale.z, 0.01f, elapsedTime * slamSquashSpeed);
 
-	if (slamRecovery)
+	if (state==State::SlamCooldown)
 	{
 		visualOffset = 0.0f;	
 		return;
@@ -517,34 +561,27 @@ void Player::ApplyHop(float elapsedTime)
 	}
 }
 
+void Player::MoveSeiGen()
+{
+	if (position.z > 40.0f) position.z = 40.0f;
+	if (position.z < -40.0f) position.z = -40.0f;
+	if (position.x > 12.0f) position.x = 12.0f;
+	if (position.x < -12.0f) position.x = -12.0f;
+}
+
 void Player::StartSlam()
 {
-	if (isSlamming)
-	{
-		return;
-	}
 	if (slamGauge <= 0) return;
 
 	slamGauge = 0;
-	isSlamming = true;
 	slamHitActive = true;
-}
-
-void Player::SlamRecovery(float elapsedTime)
-{
-	if (!slamRecovery)
-	{
-		return;
-	}
-	if (slamAfterBuffer <= 0.0f)
-	{
-		slamRecovery = false;
-	}
+	state = State::Slam;
 }
 
 void Player::StartDash()
 {
-	isDashing = true;
+	state = State::Dash;
+	dashCooldown = 0.0f;
 	dashUsedInAir = true;
 	dashTimer = dashDuration;
 
